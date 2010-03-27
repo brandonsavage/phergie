@@ -41,6 +41,10 @@ class Phergie_Plugin_Google extends Phergie_Plugin_Abstract
         array(
             'cmd' => 'gconvert [value] [currency from] [currency to]',
             'desc' => 'Does the currency conversion between the currencies specified'
+        ),
+        array(
+            'cmd' => 'convert [unit] [to] [unit2]',
+            'desc' => 'Convert a value to another value.'
         )
     );
 
@@ -181,7 +185,7 @@ class Phergie_Plugin_Google extends Phergie_Plugin_Abstract
             $city = $xml->forecast_information->city->attributes()->data[0];
             $time = $xml->forecast_information->current_date_time->attributes()->data[0];
             $condition = $xml->current_conditions->condition->attributes()->data[0];
-            $temp = $xml->current_conditions->temp_c->attributes()->data[0] . 'º C';
+            $temp = $xml->current_conditions->temp_c->attributes()->data[0] . 'ï¿½ C';
             $humidity = $xml->current_conditions->humidity->attributes()->data[0];
             $wind = $xml->current_conditions->wind_condition->attributes()->data[0];
             $msg = implode(' - ', array($city, $temp, $condition, $humidity, $wind));
@@ -194,8 +198,8 @@ class Phergie_Plugin_Google extends Phergie_Plugin_Abstract
                 $condition = $linha->condition->attributes()->data[0];
                 $msg 
                     = 'Forecast: ' . $day . 
-                    ' - Min: ' . $min . 'º C' . 
-                    ' - Max: ' . $max . 'º C' . 
+                    ' - Min: ' . $min . 'ï¿½ C' . 
+                    ' - Max: ' . $max . 'ï¿½ C' . 
                     ' - ' . $condition;
                 $this->doPrivmsg($source, $msg);
             }
@@ -298,6 +302,33 @@ class Phergie_Plugin_Google extends Phergie_Plugin_Abstract
             }
         } else {
             $this->doPrivmsg($source, $nick . ', we had a problem.');
+        }
+    }
+
+    public function onCommandConvert($unit, $to, $unit2)
+    {
+        $url = 'http://www.google.com/search?q=' . urlencode($unit . ' ' . $to . ' ' . $unit2);
+        $response = $this->http->get($url);
+        $contents = $response->getContent();
+        
+        $event = $this->getEvent();
+        $source = $event->getSource();
+        $nick = $event->getNick();
+        $doc = new DomDocument();
+        @$doc->loadHTML($contents);
+        foreach ($doc->getElementsByTagName('h2') as $element) {
+            if ($element->getAttribute('class') == 'r') {
+                $children = $element->childNodes;
+                $text = str_replace(array(chr(195), chr(151), chr(160)), array('x', '', ' '), $children->item(0)->nodeValue);
+                if ($children->length >= 3) {
+                    $text .= '^' . $children->item(1)->nodeValue . $children->item(2)->nodeValue;
+                }
+            }
+        }
+        if (isset($text)) {
+            $this->doPrivmsg($source, $nick . ': ' . $text);
+        } else {
+            $this->doPrivmsg($target, $nick . ', sorry I can\'t do that.');
         }
     }
 }
