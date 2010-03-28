@@ -305,17 +305,31 @@ class Phergie_Plugin_Google extends Phergie_Plugin_Abstract
         }
     }
 
+    /**
+     * Performs a Google search to convert the values
+     *
+     * @param string $unit
+     * @param string $to
+     * @param string $unit2
+     * @return void
+     */
     public function onCommandConvert($unit, $to, $unit2)
     {
         $url = 'http://www.google.com/search?q=' . urlencode($unit . ' ' . $to . ' ' . $unit2);
         $response = $this->http->get($url);
         $contents = $response->getContent();
-        
         $event = $this->getEvent();
         $source = $event->getSource();
         $nick = $event->getNick();
+
+        if (empty($contents)) {
+            $this->doPrivmsg($target, $nick . ', sorry, I can\'t give you an answer right now.');
+            return;
+        }
+
+
         $doc = new DomDocument();
-        @$doc->loadHTML($contents);
+        $doc->loadHTML($contents);
         foreach ($doc->getElementsByTagName('h2') as $element) {
             if ($element->getAttribute('class') == 'r') {
                 $children = $element->childNodes;
