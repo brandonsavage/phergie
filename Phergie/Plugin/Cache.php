@@ -16,37 +16,36 @@
 * @author    Phergie Development Team <team@phergie.org>
 * @copyright 2008-2010 Phergie Development Team (http://phergie.org)
 * @license   http://phergie.org/license New BSD License
-* @link      http://pear.phergie.org/package/Phergie_Plugin_Google
+* @link      http://pear.phergie.org/package/Phergie_Plugin_Cache
 */
 
 /**
-* A generic cache to be shared amongst other plugins.
-*
+* Implements a generic cache to be used by other plugins.
 * @category Phergie
 * @package  Phergie_Plugin_Cache
 * @author   Phergie Development Team <team@phergie.org>
 * @license  http://phergie.org/license New BSD License
-* @link     http://pear.phergie.org/package/Phergie_Plugin_Google
+* @link     http://pear.phergie.org/package/Phergie_Plugin_Cache
 */
 class Phergie_Plugin_Cache extends Phergie_Plugin_Abstract
 {
     /**
-     * The cache inside the class.
+     * Key-value data storage for the cache
      * 
      * @var array 
      */
     protected $cache = array();
 
     /**
-     * Allows a value to be stored in the cache. Takes optional arguments of
-     * Time To Live (TTL) and whether or not existing values can be overwritten.
+     * Stores a value in the cache. 
      *
-     * @param string  $key       The key to store data with.
-     * @param mixed   $data      The data to be stored. Can be any valid data.
-     * @param integer $ttl       The time to live. Can be null for forever.
-     * @param boolean $overwrite Whether overwriting is permissible.
+     * @param string   $key       Key to associate with the value 
+     * @param mixed    $data      Data to be stored
+     * @param int|null $ttl       Time to live in seconds or NULL for forever
+     * @param bool     $overwrite TRUE to overwrite any existing value 
+     *        associated with the specified key
      *
-     * @return boolean
+     * @return bool
      */
     public function store($key, $data, $ttl = 3600, $overwrite = true)
     {
@@ -66,11 +65,12 @@ class Phergie_Plugin_Cache extends Phergie_Plugin_Abstract
     }
 
     /**
-     * Fetch a key that has been stored.
+     * Fetches a previously stored value. 
      *
-     * @param string $key The key to be retreived.
+     * @param string $key Key associated with the value 
      *
-     * @return mixed
+     * @return mixed Stored value or FALSE if no value or an expired value 
+     *         is associated with the specified key 
      */
     public function fetch($key)
     {
@@ -88,11 +88,11 @@ class Phergie_Plugin_Cache extends Phergie_Plugin_Abstract
     }
 
     /**
-     * Expire a key who has outlived their time to live.
+     * Expires a value that has exceeded its time to live.
      *
-     * @param string $key The key to be expired.
+     * @param string $key Key associated with the value to expire 
      *
-     * @return boolean
+     * @return bool
      */
     protected function expire($key)
     {
