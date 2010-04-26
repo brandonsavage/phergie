@@ -44,7 +44,10 @@ class Phergie_Plugin_HandlerTest extends PHPUnit_Framework_TestCase
      */
     public function setUp()
     {
-        $this->handler = new Phergie_Plugin_Handler();
+        $this->handler = new Phergie_Plugin_Handler(
+            new Phergie_Config(),
+            new Phergie_Event_Handler()
+        );
     }
 
     /**
@@ -165,8 +168,28 @@ class Phergie_Plugin_HandlerTest extends PHPUnit_Framework_TestCase
         }
 
         $this->fail(
-            'Before adding the directory, an expected exception'
+            'Before adding the directory, an expected exception '
             . 'was not raised'
+        );
+    }
+
+    /**
+     * addPlugin returns the plugin instance that was added
+     *
+     * @return void
+     */
+    public function testAddPluginByInstanceReturnsPluginInstance() {
+        $plugin = $this->getMock('Phergie_Plugin_Abstract');
+        $plugin
+            ->expects($this->any())
+            ->method('getName')
+            ->will($this->returnValue('TestPlugin'));
+
+        $returned_plugin = $this->handler->addPlugin($plugin);
+        $this->assertSame(
+            $returned_plugin,
+            $plugin,
+            'addPlugin returns the same instance that is passed to it'
         );
     }
 
@@ -186,9 +209,10 @@ class Phergie_Plugin_HandlerTest extends PHPUnit_Framework_TestCase
             'Phergie_Plugin_Mock',
             $this->handler->getPlugin($plugin_name)
         );
-        $this->assertEquals(
+        $this->assertSame(
             $this->handler->getPlugin($plugin_name),
-            $returned_plugin
+            $returned_plugin,
+            'Handler contains plugin when added by shortname.'
         );
     }
 
@@ -303,6 +327,74 @@ class Phergie_Plugin_HandlerTest extends PHPUnit_Framework_TestCase
             . 'the Mock plugin constructor received'
         );
     }
+
+    /**
+     * addPlugin passes Phergie_Config to instantiated plugin
+     *
+     * @return null
+     */
+    public function testAddPluginPassesPhergieConfigToInstantiatedPlugin()
+    {
+        $my_config = new Phergie_Config();
+        $my_config['my_option'] = 'my_value';
+
+        // create a new handler with this config
+        unset($this->handler);
+        $this->handler = new Phergie_Plugin_Handler(
+            $my_config,
+            new Phergie_Event_Handler()
+        );
+
+        $plugin_name = 'Mock';
+        $this->handler->addPath(dirname(__FILE__), 'Phergie_Plugin_');
+
+        $plugin = $this->handler->addPlugin($plugin_name);
+
+        $this->assertSame(
+            $my_config,
+            $plugin->getConfig(),
+            'addPlugin passes Phergie_Config to instantiated plugin'
+        );
+    }
+
+    /**
+     * addPlugin passes Phergie_Event_Handler to instantiated plugin
+     *
+     * @return null
+     */
+    public function testAddPluginPassesPhergieEventHandlerToInstantiatedPlugin()
+    {
+        $plugin = $this->getMock('Phergie_Plugin_Abstract');
+        $plugin
+            ->expects($this->any())
+            ->method('getName')
+            ->will($this->returnValue('TestPlugin'));
+
+        $my_event_handler = new Phergie_Event_Handler();
+        $my_event_handler->addEvent($plugin, 'ping');
+
+        // create a new plugin handler with this event handler
+        unset($this->handler);
+        $this->handler = new Phergie_Plugin_Handler(
+            new Phergie_Config(),
+            $my_event_handler
+        );
+
+        $plugin_name = 'Mock';
+        $this->handler->addPath(dirname(__FILE__), 'Phergie_Plugin_');
+
+        $plugin = $this->handler->addPlugin($plugin_name);
+
+        $this->assertSame(
+            $my_event_handler,
+            $plugin->getEventHandler(),
+            'addPlugin passes Phergie_Event_Handler to instantiated plugin'
+        );
+    }
+
+    /**
+     * @todo addPlugin calls onLoad() to instantiated plugin
+     */
 
     /**
      * implements __isset
